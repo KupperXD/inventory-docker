@@ -6,10 +6,12 @@ services:
     build:
       context: ./api
     container_name: ${PROJECT_NAME}_api
-    working_dir: /var/www/api
+    working_dir: /var/www/api/
     volumes:
-      - ../api:/var/www/api
-    command: "su node -c 'npm ci && npm run start:dev'"
+      - ../api:/var/www/api/
+    depends_on:
+      - database
+    command: "su node -c 'npm run docker:start'"
     networks:
       - internal
 

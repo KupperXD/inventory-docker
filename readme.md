@@ -4,7 +4,7 @@
 ---
 
 ## Описание контейнеров
-- **web** - контейнер с сервером приложения [Symfony]
+- **api** - контейнер с сервером приложения [Nest]
 - **admin** - контейнер с фронтом приложения
 - **nginx** - контейнер для обработки пользовательских запросов
 - **postgres** - контейнер с основной базой данной [PostgreSQL] проекта
@@ -15,14 +15,14 @@
 Для установки необходимо чётко соблюдать последовательность действий и структуру вложенности директорий.
 
 ### 1. Убедиться в наличии доступа ко всем репозиториям проекта
-- https://gitlab.com/internet-design/svk_inventory_docker - репозиторий docker-песочницы
-- https://gitlab.com/internet-design/svk_inventory - репозиторий приложения
-- https://gitlab.com/internet-design/svk_inventory_frontend - репозиторий фронтенда
+- https://github.com/KupperXD/inventory-docker - репозиторий docker-песочницы
+- https://github.com/KupperXD/inventory-api - репозиторий api
+- https://github.com/KupperXD/inventory-admin - репозиторий фронтенда
 
 ### 2. Создать директории для проекта
 Внутри директории `/path/to/project` необходимо создать поддиректории:
 - docker
-- web
+- api
 - admin
 
 ```bash
@@ -31,23 +31,23 @@ mkdir /path/to/project
 cd /path/to/project
 
 mkdir docker
-mkdir web
+mkdir api
 mkdir admin
 ```
 
 В итоге должна получиться следующая структура:
 - **/path/to/project**
     - /path/to/project/**docker**
-    - /path/to/project/**web**
+    - /path/to/project/**api**
     - /path/to/project/**admin**
 
 ### 3. Клонировать репозитории в соответствующие директории
 ```bash
 cd /path/to/project
 
-git clone git@gitlab.com:internet-design/svk_inventory_docker.git docker
-git clone git@gitlab.com:internet-design/svk_inventory.git web
-git clone git@gitlab.com:internet-design/svk_inventory_frontend.git admin
+git clone git@github.com:KupperXD/inventory-docker.git docker
+git clone git@github.com:KupperXD/inventory-api.git api
+git clone git@github.com:KupperXD/inventory-admin.git admin
 ```
 
 ### 4. Конфигурации
@@ -69,10 +69,10 @@ cp .env.example .env
 С помощью этого порта можно будет подключаться в браузере к проекту:
 `http://localhost:NGINX_PORT`
 
-### Web:
+### Api:
 #### 1. Скопировать файл конфигурации
 ```bash
-cd /path/to/project/web
+cd /path/to/project/api
 cp .env.example .env
 
 cd /path/to/project/admin
@@ -80,13 +80,11 @@ cp .env.example .env
 ```
 
 #### 2. Отредактировать файл конфигурации (опционально)
-Если на шаге *4.2* менялся порт `NGINX_PORT`, необходимо в файле `/path/to/project/web/.env` отредактировать переменную `APP_URL`, указав нужный порт.
-
 
 ### 5. Запустить окружение
 Для запуска окружения требуется перейти в директорию `/path/to/project/docker` и запустить команду:
 ```bash
-docker-compose up -d
+make up
 ```
 
 Первый запуск будет долгим, так как требуется:
@@ -104,24 +102,8 @@ docker-compose logs <id_контейнера>
 docker container ls
 ```
 
-### 6. Установить пакеты и выполнить миграции
-Стянуть дамп с СВК. Выполнить команду:
+### 6. Выполнить миграции
 
-```bash
- make import-dump path="/path/to/dump.sql"
-```
-
-Либо
-
-```bash
-docker exec -i postgres psql --username pg_username database_name < /path/on/your/machine/dump.sql
-```
-
-Где
-- `pg_username` -  `POSTGRES_USER` из .env файла в докере
-- `database_name` -  `POSTGRES_DB` из .env файла в докере
-
-В дальнейшем миграции нужно выполнять с помощью команды: 
 ```bash
 make migrate
 ```
