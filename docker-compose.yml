@@ -7,20 +7,36 @@ services:
     volumes:
       - ./s3/data1-1:/data1
       - ./s3/data1-2:/data2
-    ports:
-      - "${MINIO_CONSOLE_EXPOSE_PORT}:${MINIO_CONSOLE_PORT}"
-      - "${MINIO_API_EXPOSE_PORT}:${MINIO_API_PORT}"
     environment:
-      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
-      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-    command: server --address ":${MINIO_CONSOLE_PORT}" --console-address ":${MINIO_API_PORT}" http://minio/data{1...2}
+      - "MINIO_ROOT_USER=${MINIO_ROOT_USER}"
+      - "MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}"
+    expose:
+      - "9000"
+      - "9001"
+    command: server --console-address ":9001" http://minio/data{1...2}
     healthcheck:
-      test: [ 'CMD', 'curl', '-f', 'http://localhost:12005/minio/health/live' ]
+      test: [ 'CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live' ]
       interval: 30s
       timeout: 20s
       retries: 3
+    networks:
+      - internal
+
+  nginx-minio:
+    image: ${PROJECT_NAME}_nginx-minio
+    build:
+      context: ./nginx-minio
+    container_name: ${PROJECT_NAME}_nginx-minio.local
+    hostname: nginx-minio.local
+    depends_on:
+      - minio
+    volumes:
+      - ./nginx-minio/conf.d:/etc/nginx/conf.d
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    networks:
+      - internal
 
   api:
     image: ${PROJECT_NAME}_api
