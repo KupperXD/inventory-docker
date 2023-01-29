@@ -60,6 +60,9 @@ services:
     working_dir: /var/www/admin
     volumes:
       - ../admin:/var/www/admin
+
+    ports:
+      - "24678:24678"
     command: "su node -c 'npm ci && npm run dev'"
     networks:
       - internal
