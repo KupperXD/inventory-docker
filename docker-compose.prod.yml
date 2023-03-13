@@ -1,0 +1,91 @@
+version: "3"
+
+services:
+  api:
+    image: ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-api
+    container_name: ${PROJECT_NAME}_api
+    depends_on:
+      database:
+        condition: service_healthy
+    restart: always
+    user: node
+    volumes:
+      - ./logs-api:/app/logs
+    environment:
+      - DB_URL=${DB_URL}
+      - APPLICATION_PORT=${BACKEND_APPLICATION_PORT}
+      - JWT_ACCESS_TOKEN_SECRET=${JWT_ACCESS_TOKEN_SECRET}
+      - JWT_ACCESS_TOKEN_EXPIRATION_TIME=${JWT_ACCESS_TOKEN_EXPIRATION_TIME}
+      - JWT_REFRESH_TOKEN_SECRET=${JWT_REFRESH_TOKEN_SECRET}
+      - JWT_REFRESH_TOKEN_EXPIRATION_TIME=${JWT_REFRESH_TOKEN_EXPIRATION_TIME}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_PUBLIC_BUCKET_NAME=${AWS_PUBLIC_BUCKET_NAME}
+      - AWS_ENDPOINT_URL=${AWS_ENDPOINT_URL}
+      - AWS_REGION=${AWS_REGION}
+      - UPLOADED_FILES_DESTINATION=${UPLOADED_FILES_DESTINATION}
+    networks:
+      - internal
+
+  admin:
+    image: ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-admin
+    restart: always
+    container_name: ${PROJECT_NAME}_admin
+    environment:
+      - NUXT_PUBLIC_BASE_URL=${NUXT_PUBLIC_BASE_URL}
+      - NUXT_PUBLIC_BASE_API_SERVER_URL=${NUXT_PUBLIC_BASE_API_SERVER_URL}
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1
+      timeout: 3s
+      interval: 3s
+      retries: 10
+    networks:
+      - internal
+
+  nginx:
+    image: ${PROJECT_NAME}_nginx
+    build:
+      context: ./nginx
+    container_name: ${PROJECT_NAME}_nginx
+    restart: always
+    depends_on:
+      admin:
+        condition: service_healthy
+    volumes:
+      - ./nginx/prod.override/conf.d:/etc/nginx/conf.d
+    environment:
+      - VIRTUAL_HOST=${NGINX_VIRTUAL_HOST}
+      - VIRTUAL_PORT=${NGINX_VIRTUAL_PORT}
+    expose:
+      - 80
+    networks:
+      - reverse-proxy
+      - internal
+
+  database:
+    image: postgres:11-alpine
+    container_name: ${PROJECT_NAME}_postgres
+    restart: always
+    user: postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - ./database-prod:/var/lib/postgresql/data
+    expose:
+      - ${POSTGRES_PORT}
+    networks:
+      - internal
+
+networks:
+  reverse-proxy:
+    external:
+      name: reverse-proxy
+  internal:
+    driver: bridge

@@ -1,4 +1,8 @@
 .idea/
 .env
+.env.production
 database/
+database-prod/
 s3
+nginx/prod.override/
+logs-api
