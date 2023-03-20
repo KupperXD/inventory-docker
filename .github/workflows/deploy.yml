@@ -1,8 +1,7 @@
 name: Deploy
 on:
   release:
-    tags:
-      - v*
+    types: [published, created, edited],
 jobs:
   prod-deploy:
     runs-on: ubuntu-latest
