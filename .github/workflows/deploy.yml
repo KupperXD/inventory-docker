@@ -1,7 +1,7 @@
 name: Deploy
 on:
   release:
-    types: [published, created, edited]
+    types: [published]
 jobs:
   prod-deploy:
     runs-on: ubuntu-latest
@@ -14,4 +14,9 @@ jobs:
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SERVER_PORT }}
-          script: ls -la
+          script_stop: true
+          script: |
+            cd apps/svk-inventory/inventory-docker
+            docker-compose down
+            docker-compose -f docker-compose.prod.yml pull
+            docker-compose -f -docker-compose.prod-yml up -d
