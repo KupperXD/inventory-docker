@@ -7,7 +7,7 @@ services:
     depends_on:
       database:
         condition: service_healthy
-    restart: always
+    restart: unless-stopped
     user: node
     volumes:
       - ./logs-api:/app/logs
@@ -29,7 +29,7 @@ services:
 
   admin:
     image: ${DOCKER_HUB_USERNAME}/${PROJECT_NAME}-admin
-    restart: always
+    restart: unless-stopped
     container_name: ${PROJECT_NAME}_admin
     environment:
       - NUXT_PUBLIC_BASE_URL=${NUXT_PUBLIC_BASE_URL}
@@ -47,10 +47,9 @@ services:
     build:
       context: ./nginx
     container_name: ${PROJECT_NAME}_nginx
-    restart: always
+    restart: unless-stopped
     depends_on:
-      admin:
-        condition: service_healthy
+      - admin
     volumes:
       - ./nginx/prod.override/conf.d:/etc/nginx/conf.d
     environment:
@@ -65,8 +64,7 @@ services:
   database:
     image: postgres:11-alpine
     container_name: ${PROJECT_NAME}_postgres
-    restart: always
-    user: postgres
+    restart: unless-stopped
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}" ]
       interval: 10s
