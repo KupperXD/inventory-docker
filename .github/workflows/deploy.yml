@@ -16,7 +16,7 @@ jobs:
           port: ${{ secrets.SERVER_PORT }}
           script_stop: true
           script: |
-            cd apps/svk-inventory/inventory-docker
-            docker-compose down
-            docker-compose -f docker-compose.prod.yml pull
+            cd apps/svk-inventory/inventory-docker &&
+            docker-compose down &&
+            docker-compose -f docker-compose.prod.yml pull &&
             docker-compose -f -docker-compose.prod-yml up -d
